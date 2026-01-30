@@ -1,0 +1,16 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+build/*
+!build/.gitkeep
+dist/*
+!dist/.gitkeep
+src/*
+!src/.gitkeep
+
+# Session files
+*.session
+*.session.users.json
+
+.env
