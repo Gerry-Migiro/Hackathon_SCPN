@@ -1,30 +1,30 @@
-cl import from react { useState, useEffect }
-cl import from "@jac-client/utils" { jacIsLoggedIn, Navigate }
+import from react { useEffect }
+import from "@jac-client/utils" { jacIsLoggedIn, Navigate }
 
 walker get_recommended_courses {}
 
-cl def Courses()  -> any {
+def:pub Courses()  -> any {
     if not jacIsLoggedIn() {
         return <Navigate to="/login" />;
     }
 
-    let [courses, setCourses] = useState([]);
-    let [loading, setLoading] = useState(True);
-    let [filterText, setFilterText] = useState("");
+    has courses: list = [],
+        loading: bool = True,
+        filterText: str = "";
 
     # Load personalized courses on mount
     useEffect(
         lambda   -> None{ async def loadCourses()  -> None {
-            setLoading(True);
+            loading = True;
             try {
-                let res = await root spawn get_recommended_courses();
+                res = await root spawn get_recommended_courses();
                 if res.reports and res.reports.length > 0 {
-                    setCourses(res.reports[0]);
+                    courses = res.reports[0];
                 }
             } except err {
                 console.error("Error loading courses:", err);
             }
-            setLoading(False);
+            loading = False;
         } loadCourses();} ,
         []
     );
@@ -35,13 +35,13 @@ cl def Courses()  -> any {
             return courses;
         }
 
-        let lower = filterText.toLowerCase();
+        lower = filterText.toLowerCase();
         return courses.filter(
             lambda  c: any  -> bool{ return c["title"].toLowerCase().includes(lower); }
         );
     }
 
-    let filteredCourses = getFilteredCourses();
+    filteredCourses = getFilteredCourses();
 
     return <div
         className="container"
@@ -69,7 +69,7 @@ cl def Courses()  -> any {
             <input
                 type="text"
                 value={filterText}
-                onChange={lambda  e: any  -> None{ setFilterText(e.target.value);} }
+                onChange={lambda  e: any  -> None{ filterText = e.target.value;} }
                 placeholder="Search courses by title..."
                 className="form-input"
             />

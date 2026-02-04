@@ -1,5 +1,5 @@
-cl import from react { useState, useEffect }
-cl import from "@jac-client/utils" { jacIsLoggedIn, Navigate }
+import from react { useEffect }
+import from "@jac-client/utils" { jacIsLoggedIn, Navigate }
 
 walker get_profile {}
 
@@ -7,36 +7,36 @@ walker fetch_jobs {
     has role_filter: str = "";
 }
 
-cl def Jobs()  -> any {
+def:pub Jobs()  -> any {
     if not jacIsLoggedIn() {
         return <Navigate to="/login" />;
     }
 
-    let [jobs, setJobs] = useState([]);
-    let [roleFilter, setRoleFilter] = useState("");
-    let [loading, setLoading] = useState(False);
-    let [initialized, setInitialized] = useState(False);
+    has jobs: list = [],
+        roleFilter: str = "",
+        loading: bool = False,
+        initialized: bool = False;
 
     # Clean and parse job data from backend
     def processJobs(jobsData: any) -> None {
         try {
             if not jobsData {
-                setJobs([]);
+                jobs = [];
                 return;
             }
 
             # Handle string (needs parsing) or already parsed array
             # Check if it has replace method (string)
             if jobsData.replace {
-                let clean = jobsData.replace("```json", "").replace("```", "").trim();
-                let parsed = JSON.parse(clean);
-                setJobs(parsed);
+                clean = jobsData.replace("```json", "").replace("```", "").trim();
+                parsed = JSON.parse(clean);
+                jobs = parsed;
             } else {
-                setJobs(jobsData);
+                jobs = jobsData;
             }
         } except parseErr {
             console.error("Error processing jobs:", parseErr);
-            setJobs([]);
+            jobs = [];
         }
     }
 
@@ -46,23 +46,23 @@ cl def Jobs()  -> any {
             return;
         }
 
-        setLoading(True);
-        setJobs([]);
+        loading = True;
+        jobs = [];
 
         try {
-            let res = await root spawn fetch_jobs(role_filter=role);
+            res = await root spawn fetch_jobs(role_filter=role);
 
             if res.reports and res.reports.length > 0 {
                 processJobs(res.reports[0]);
             } else {
-                setJobs([]);
+                jobs = [];
             }
         } except ex {
             console.error("Error fetching jobs:", ex);
-            setJobs([]);
+            jobs = [];
         }
 
-        setLoading(False);
+        loading = False;
     }
 
     # Handler for manual search button
@@ -76,18 +76,18 @@ cl def Jobs()  -> any {
         lambda   -> None{ if not initialized {
             async def init()  -> None {
                 try {
-                    let res = await root spawn get_profile();
+                    res = await root spawn get_profile();
 
                     if not (res.reports and res.reports.length > 0) {
-                        setInitialized(True);
+                        initialized = True;
                         return;
                     }
 
-                    let profile = res.reports[0];
-                    let targetRole = profile["target_role"] or "";
+                    profileData = res.reports[0];
+                    targetRole = profileData["target_role"] or "";
 
                     # Pre-fill role filter with target role and auto-search
-                    setRoleFilter(targetRole);
+                    roleFilter = targetRole;
                     
                     if targetRole {
                         setTimeout(
@@ -95,10 +95,10 @@ cl def Jobs()  -> any {
                         );
                     }
 
-                    setInitialized(True);
+                    initialized = True;
                 } except loadError {
                     console.error("Error initializing jobs:", loadError);
-                    setInitialized(True);
+                    initialized = True;
                 }
             }
             init();
@@ -126,7 +126,7 @@ cl def Jobs()  -> any {
             <input
                 type="text"
                 value={roleFilter}
-                onChange={lambda  e: any  -> None{ setRoleFilter(e.target.value);} }
+                onChange={lambda  e: any  -> None{ roleFilter = e.target.value;} }
                 placeholder="Enter role to search for jobs..."
                 className="form-input"
                 style={{"flex": 1}}

@@ -1,0 +1,17 @@
+[project]
+name = "smart-career-navigator"
+version = "1.0.0"
+description = "AI-powered Smart Career Path Navigator with OSP graph capabilities"
+entry-point = "app.jac"
+
+[dependencies.npm]
+jac-client-node = "latest"
+
+[dependencies.npm.dev]
+"@jac-client/dev-deps" = "latest"
+
+[serve]
+base_route_app = "app"
+
+[plugins.client]
+port = 5173

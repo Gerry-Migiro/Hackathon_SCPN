@@ -140,7 +140,7 @@ All 7 pages use React-style components with Jac Client for seamless backend inte
 - **Model:** gemini/gemini-2.5-flash
 
 ### ✅ Jac Client
-**Location:** [frontend/pages/](frontend/pages/)
+**Location:** [components/](components/)
 - **16 Spawn() calls** across 7 pages
 - Examples: `root spawn get_profile()`, `root spawn generate_roadmap(target_role=role)`
 - All frontend-backend calls use Spawn() (no REST APIs)
@@ -176,10 +176,15 @@ export GEMINI_API_KEY="your-key-here"
 
 **Start the Jac server:**
 ```bash
-jac serve app.jac
+jac start app.jac
 ```
 
 The application will be available at `http://localhost:8000`
+
+**Development mode with HMR:**
+```bash
+jac start --dev app.jac
+```
 
 ## 📊 Features
 
@@ -265,15 +270,15 @@ Unlike traditional REST APIs, our OSP implementation provides:
 ## 🛠️ Technology Stack
 
 - **Backend:** Jaseci/Jac Programming Language
-- **Frontend:** Jac Client (React-style components)
+- **Frontend:** Jac Client 0.2.8 (React-style components with .cl.jac files)
 - **AI/LLM:** byLLM with Gemini Flash 2.5
 - **Graph Model:** OSP with typed nodes and edges
 - **API Integration:** Jobicy Jobs API
 
 ## � Project Stats
 
-- **Backend:** 830 lines (app.jac)
-- **Frontend:** 1,901 lines (7 pages)
+- **Backend:** 868 lines (app.jac)
+- **Frontend:** 8 component files (components/*.cl.jac)
 - **Walkers:** 11 (9 exposed via API)
 - **Spawn Calls:** 16 across frontend
 - **OSP Edges:** 3 types with attributes
@@ -281,8 +286,18 @@ Unlike traditional REST APIs, our OSP implementation provides:
 
 ## 📚 Key Files
 
-- [`app.jac`](app.jac) - Main backend (OSP graph, walkers, multi-agent system)
-- [`frontend/pages/`](frontend/pages/) - Jac Client components (Dashboard, Profile, Career, Jobs, Courses)
+- [`app.jac`](app.jac) - Main backend + frontend entry (OSP graph, walkers, multi-agent system)
+- [`components/`](components/) - Jac Client components (.cl.jac files)
+  - `Dashboard.cl.jac` - Main dashboard
+  - `Profile.cl.jac` - User profile management
+  - `CareerPath.cl.jac` - AI-powered career roadmap
+  - `Jobs.cl.jac` - Job discovery
+  - `Courses.cl.jac` - Learning resources
+  - `LoginPage.cl.jac` - User login
+  - `SignupPage.cl.jac` - User registration
+  - `Navbar.cl.jac` - Navigation component
+- [`globals.css`](globals.css) - Global styles
+- [`jac.toml`](jac.toml) - Project configuration
 
 
 ## 🧪 Testing
@@ -291,11 +306,8 @@ Unlike traditional REST APIs, our OSP implementation provides:
 # Check for errors
 jac check app.jac
 
-# Build application  
-jac build app.jac
-
 # Start server
-jac serve app.jac
+jac start app.jac
 ```
 
 Access at `http://localhost:8000`

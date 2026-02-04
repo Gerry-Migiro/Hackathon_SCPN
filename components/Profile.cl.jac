@@ -1,4 +1,4 @@
-cl import from react { useState, useEffect }
+import from react { useEffect }
 
 walker get_profile {}
 walker get_all_roles {}
@@ -21,42 +21,40 @@ walker parse_resume {
     has resume_text: str;
 }
 
-cl def Profile()  -> any {
-    let [profile, setProfile] = useState(
-        {"name": "", "interests": [], "goals": [], "skills": [], "target_role": ""}
-    );
-    let [availableRoles, setAvailableRoles] = useState([]);
-    let [newSkill, setNewSkill] = useState("");
-    let [newInterest, setNewInterest] = useState("");
-    let [newGoal, setNewGoal] = useState("");
-    let [message, setMessage] = useState("");
-    let [loading, setLoading] = useState(False);
-    let [resumeText, setResumeText] = useState("");
-    let [parseLoading, setParseLoading] = useState(False);
+def:pub Profile()  -> any {
+    has profile: any = {"name": "", "interests": [], "goals": [], "skills": [], "target_role": ""},
+        availableRoles: list = [],
+        newSkill: str = "",
+        newInterest: str = "",
+        newGoal: str = "",
+        message: str = "",
+        loading: bool = False,
+        resumeText: str = "",
+        parseLoading: bool = False;
 
     # Load profile on mount
     useEffect(
         lambda   -> None{ async def load()  -> None {
-            setLoading(True);
+            loading = True;
 
             # Fetch available roles
             try {
-                let rolesRes = await root spawn get_all_roles();
+                rolesRes = await root spawn get_all_roles();
                 if rolesRes.reports and rolesRes.reports.length > 0 {
-                    setAvailableRoles(rolesRes.reports[0]);
+                    availableRoles = rolesRes.reports[0];
                 }
             } except err {
                 console.error("Error fetching roles:", err);
             }
 
-            let res = await root spawn get_profile();
+            res = await root spawn get_profile();
             if res.reports and res.reports.length > 0 {
-                let p = res.reports[0];
+                p = res.reports[0];
                 if p {
-                    setProfile(p);
+                    profile = p;
                 }
             }
-            setLoading(False);
+            loading = False;
         } load();} ,
         []
     );
@@ -68,58 +66,58 @@ cl def Profile()  -> any {
         }
 
         # Optimistic update
-        let currentSkills = profile["skills"];
-        let updatedSkills = currentSkills.concat([newSkill]);
+        currentSkills = profile["skills"];
+        updatedSkills = currentSkills.concat([newSkill]);
 
-        let newProfile = {
+        newProfile = {
             "name": profile["name"],
             "interests": profile["interests"],
             "goals": profile["goals"],
             "skills": updatedSkills,
             "target_role": profile["target_role"]
         };
-        setProfile(newProfile);
+        profile = newProfile;
 
         # Backend call
         await root spawn add_skill(skill_name=newSkill);
 
         # Sync to be safe
-        let res = await root spawn get_profile();
+        res = await root spawn get_profile();
         if res.reports {
-            setProfile(res.reports[0]);
+            profile = res.reports[0];
         }
 
-        setNewSkill("");
+        newSkill = "";
     }
 
     async def handleDeleteSkill(skillName: str) -> None {
         # Optimistic update
-        let updatedSkills = profile["skills"].filter(
+        updatedSkills = profile["skills"].filter(
             lambda  s: str  -> bool{ return s != skillName; }
         );
 
-        let newProfile = {
+        newProfile = {
             "name": profile["name"],
             "interests": profile["interests"],
             "goals": profile["goals"],
             "skills": updatedSkills,
             "target_role": profile["target_role"]
         };
-        setProfile(newProfile);
+        profile = newProfile;
 
         # Backend call
         await root spawn delete_skill(skill_name=skillName);
 
         # Sync to be safe
-        let res = await root spawn get_profile();
+        res = await root spawn get_profile();
         if res.reports {
-            setProfile(res.reports[0]);
+            profile = res.reports[0];
         }
     }
 
     # --- Profile Fields Management (Batch Save) ---
     def handleUpdateField(key: str, value: any) -> None {
-        let newProfile = {
+        newProfile = {
             "name": profile["name"],
             "interests": profile["interests"],
             "goals": profile["goals"],
@@ -127,76 +125,76 @@ cl def Profile()  -> any {
             "target_role": profile["target_role"]
         };
         newProfile[key] = value;
-        setProfile(newProfile);
+        profile = newProfile;
     }
 
     def handleAddList(key: str, value: str, setter: any) -> None {
         if value {
-            let currentList = profile[key];
-            let updatedList = currentList.concat([value]);
+            currentList = profile[key];
+            updatedList = currentList.concat([value]);
             handleUpdateField(key, updatedList);
             setter("");
         }
     }
 
     def handleDeleteList(key: str, value: str) -> None {
-        let updatedList = profile[key].filter(
+        updatedList = profile[key].filter(
             lambda  i: str  -> bool{ return i != value; }
         );
         handleUpdateField(key, updatedList);
     }
 
     async def handleSaveProfile()  -> None {
-        setMessage("Saving...");
+        message = "Saving...";
         await root spawn update_profile(
             name=profile["name"],
             interests=profile["interests"],
             goals=profile["goals"],
             target_role=profile["target_role"]
         );
-        setMessage("Profile saved successfully!");
-        setTimeout(lambda   -> None{ setMessage("");} , 3000);
+        message = "Profile saved successfully!";
+        setTimeout(lambda   -> None{ message = "";} , 3000);
     }
 
     # --- Resume Parsing ---
     async def handleResumeUpload()  -> None {
         if not resumeText {
-            setMessage("Please paste your resume text first!");
-            setTimeout(lambda   -> None{ setMessage("");} , 3000);
+            message = "Please paste your resume text first!";
+            setTimeout(lambda   -> None{ message = "";} , 3000);
             return;
         }
 
-        setParseLoading(True);
-        setMessage("Parsing resume...");
+        parseLoading = True;
+        message = "Parsing resume...";
 
         try {
-            let res = await root spawn parse_resume(resume_text=resumeText);
+            res = await root spawn parse_resume(resume_text=resumeText);
 
             if res.reports and res.reports.length > 0 {
-                let result = res.reports[0];
+                result = res.reports[0];
                 # Refresh profile to show newly added skills
-                let profileRes = await root spawn get_profile();
+                profileRes = await root spawn get_profile();
                 if profileRes.reports {
-                    setProfile(profileRes.reports[0]);
+                    profile = profileRes.reports[0];
                 }
                 # Show success message with details
-                let added_count = result["added_skills"].length;
-                let skipped_count = result["skipped_skills"].length;
+                added_count = result["added_skills"].length;
+                skipped_count = result["skipped_skills"].length;
                 setMessage(
                     f"Resume parsed! Added {added_count} new skills, skipped {skipped_count} existing skills. Total skills: {result[
                         'total_skills'
                     ]}"
                 );
                 # Clear resume text
-                setResumeText("");
+                resumeText = "";
             }
         } except err {
             console.error("Error parsing resume:", err);
-            setMessage("Failed to parse resume. Please try again.");
+            message = "Failed to parse resume. Please try again.";
         }
 
-        setParseLoading(False);
-        setTimeout(lambda   -> None{ setMessage("");} , 5000);
+        parseLoading = False;
+        setTimeout(lambda   -> None{ message = "";} , 5000);
     }
 
     if loading {
@@ -398,7 +396,7 @@ cl def Profile()  -> any {
                     <input
                         type="text"
                         value={newGoal}
-                        onChange={lambda  e: any  -> None{ setNewGoal(e.target.value);} }
+                        onChange={lambda  e: any  -> None{ newGoal = e.target.value;} }
                         placeholder="Add goal..."
                         className="form-input"
                         style={{"flex": 1}}
@@ -531,7 +529,7 @@ cl def Profile()  -> any {
                     <input
                         type="text"
                         value={newSkill}
-                        onChange={lambda  e: any  -> None{ setNewSkill(e.target.value);} }
+                        onChange={lambda  e: any  -> None{ newSkill = e.target.value;} }
                         placeholder="Add skill (e.g. Python)"
                         className="form-input"
                         style={{"flex": 1}}

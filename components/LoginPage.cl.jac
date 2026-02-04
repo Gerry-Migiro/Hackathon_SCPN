@@ -1,37 +1,36 @@
-cl import from react { useState }
-cl import from "@jac-client/utils" { Link, useNavigate, jacSignup }
+import from "@jac-client/utils" { Link, useNavigate, jacLogin }
 
-cl def SignupPage()  -> any {
-    let [username, setUsername] = useState("");
-    let [password, setPassword] = useState("");
-    let [error, setError] = useState("");
-    let navigate = useNavigate();
+def:pub LoginPage()  -> any {
+    has username: str = "",
+        password: str = "",
+        error: str = "";
+    navigate = useNavigate();
 
-    async def handleSignup(e: any) -> None {
+    async def handleLogin(e: any) -> None {
         e.preventDefault();
-        setError("");
+        error = "";
         if not username or not password {
-            setError("Please fill in all fields");
+            error = "Please fill in all fields";
             return;
         }
 
-        result = await jacSignup(username, password);
-        if result["success"] {
-            navigate("/");
+        success = await jacLogin(username, password);
+        if success {
+            navigate("/dashboard");
         } else {
-            setError(result["error"] if result["error"] else "Signup failed");
+            error = "Invalid credentials";
         }
     }
 
     def handleUsernameChange(e: any) -> None {
-        setUsername(e.target.value);
+        username = e.target.value;
     }
 
     def handlePasswordChange(e: any) -> None {
-        setPassword(e.target.value);
+        password = e.target.value;
     }
 
-    let errorDisplay = None;
+    errorDisplay = None;
     if error {
         errorDisplay = <div
             style={{"color": "#dc2626", "fontSize": "14px", "marginBottom": "10px"}}
@@ -50,7 +49,7 @@ cl def SignupPage()  -> any {
         }}
     >
         <form
-            onSubmit={handleSignup}
+            onSubmit={handleLogin}
             className="card"
             style={{"width": "100%", "maxWidth": "400px", "padding": "2.5rem"}}
         >
@@ -61,7 +60,7 @@ cl def SignupPage()  -> any {
                     "fontSize": "1.75rem"
                 }}
             >
-                Create Account
+                Welcome Back
             </h2>
             <p
                 style={{
@@ -70,7 +69,7 @@ cl def SignupPage()  -> any {
                     "marginBottom": "2rem"
                 }}
             >
-                Join to accelerate your career
+                Sign in to continue your journey
             </p>
             <div className="form-group">
                 <label className="form-label">
@@ -78,7 +77,7 @@ cl def SignupPage()  -> any {
                 </label>
                 <input
                     type="text"
-                    placeholder="Choose a username"
+                    placeholder="Enter your username"
                     value={username}
                     onChange={handleUsernameChange}
                     className="form-input"
@@ -91,7 +90,7 @@ cl def SignupPage()  -> any {
                 </label>
                 <input
                     type="password"
-                    placeholder="Choose a strong password"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={handlePasswordChange}
                     className="form-input"
@@ -104,7 +103,7 @@ cl def SignupPage()  -> any {
                 className="btn btn-primary"
                 style={{"width": "100%"}}
             >
-                Get Started
+                Sign In
             </button>
             <div
                 style={{
@@ -114,9 +113,9 @@ cl def SignupPage()  -> any {
                     "color": "var(--muted-foreground)"
                 }}
             >
-                Already have an account?
-                <Link to="/login">
-                    Sign In
+                Don't have an account?
+                <Link to="/signup">
+                    Create one
                 </Link>
             </div>
         </form>

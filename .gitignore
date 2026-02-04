@@ -1,16 +1,30 @@
 # Dependencies
 node_modules/
 
-# Build outputs
-build/*
-!build/.gitkeep
-dist/*
-!dist/.gitkeep
-src/*
-!src/.gitkeep
+# Jac build artifacts
+.jac/
+*.jir
 
 # Session files
 *.session
 *.session.users.json
 
+# Environment
 .env
+
+# Logs
+*.log
+jac_output.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo

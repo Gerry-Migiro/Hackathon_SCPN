@@ -1,37 +1,47 @@
-cl import from react { useState }
-cl import from "@jac-client/utils" { Link, useNavigate, jacLogin }
+import from "@jac-client/utils" { Link, useNavigate, jacSignup }
 
-cl def LoginPage()  -> any {
-    let [username, setUsername] = useState("");
-    let [password, setPassword] = useState("");
-    let [error, setError] = useState("");
-    let navigate = useNavigate();
+def:pub SignupPage()  -> any {
+    has username: str = "",
+        password: str = "",
+        error: str = "";
+    navigate = useNavigate();
 
-    async def handleLogin(e: any) -> None {
+    async def handleSignup(e: any) -> None {
         e.preventDefault();
-        setError("");
+        error = "";
         if not username or not password {
-            setError("Please fill in all fields");
+            error = "Please fill in all fields";
             return;
         }
 
-        success = await jacLogin(username, password);
-        if success {
-            navigate("/");
+        result = await jacSignup(username, password);
+        if result["success"] {
+            navigate("/onboarding");
         } else {
-            setError("Invalid credentials");
+            # Extract error message - result["error"] may be object {code, message} or string
+            errVal = result["error"];
+            if errVal {
+                # Try to get message from object, otherwise convert to string
+                if errVal["message"] {
+                    error = "" + errVal["message"];
+                } else {
+                    error = "" + errVal;
+                }
+            } else {
+                error = "Username already exists";
+            }
         }
     }
 
     def handleUsernameChange(e: any) -> None {
-        setUsername(e.target.value);
+        username = e.target.value;
     }
 
     def handlePasswordChange(e: any) -> None {
-        setPassword(e.target.value);
+        password = e.target.value;
     }
 
-    let errorDisplay = None;
+    errorDisplay = None;
     if error {
         errorDisplay = <div
             style={{"color": "#dc2626", "fontSize": "14px", "marginBottom": "10px"}}
@@ -50,7 +60,7 @@ cl def LoginPage()  -> any {
         }}
     >
         <form
-            onSubmit={handleLogin}
+            onSubmit={handleSignup}
             className="card"
             style={{"width": "100%", "maxWidth": "400px", "padding": "2.5rem"}}
         >
@@ -61,7 +71,7 @@ cl def LoginPage()  -> any {
                     "fontSize": "1.75rem"
                 }}
             >
-                Welcome Back
+                Create Account
             </h2>
             <p
                 style={{
@@ -70,7 +80,7 @@ cl def LoginPage()  -> any {
                     "marginBottom": "2rem"
                 }}
             >
-                Sign in to continue your journey
+                Join to accelerate your career
             </p>
             <div className="form-group">
                 <label className="form-label">
@@ -78,7 +88,7 @@ cl def LoginPage()  -> any {
                 </label>
                 <input
                     type="text"
-                    placeholder="Enter your username"
+                    placeholder="Choose a username"
                     value={username}
                     onChange={handleUsernameChange}
                     className="form-input"
@@ -91,7 +101,7 @@ cl def LoginPage()  -> any {
                 </label>
                 <input
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder="Choose a strong password"
                     value={password}
                     onChange={handlePasswordChange}
                     className="form-input"
@@ -104,7 +114,7 @@ cl def LoginPage()  -> any {
                 className="btn btn-primary"
                 style={{"width": "100%"}}
             >
-                Sign In
+                Get Started
             </button>
             <div
                 style={{
@@ -114,9 +124,9 @@ cl def LoginPage()  -> any {
                     "color": "var(--muted-foreground)"
                 }}
             >
-                Don't have an account?
-                <Link to="/signup">
-                    Create one
+                Already have an account?
+                <Link to="/login">
+                    Sign In
                 </Link>
             </div>
         </form>

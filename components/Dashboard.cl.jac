@@ -1,40 +1,40 @@
-cl import from react { useState, useEffect }
-cl import from "@jac-client/utils" { Link, useNavigate, jacIsLoggedIn, Navigate }
+import from react { useEffect }
+import from "@jac-client/utils" { Link, useNavigate, jacIsLoggedIn, Navigate }
 
 walker get_profile {}
 
-cl def Dashboard()  -> any {
+def:pub Dashboard()  -> any {
     if not jacIsLoggedIn() {
         return <Navigate to="/login" />;
     }
-    let [profile, setProfile] = useState(None);
-    let [gaps, setGaps] = useState([]);
-    let [roadmap, setRoadmap] = useState([]);
-    let navigate = useNavigate();
+    has profile: any = None,
+        gaps: list = [],
+        roadmap: list = [];
+    navigate = useNavigate();
 
     async def loadData()  -> None {
         try {
             res = await root spawn get_profile();
             if res.reports {
-                let p = res.reports[0];
+                p = res.reports[0];
                 if p and not p["error"] {
-                    setProfile(p);
-                    # Redirect to profile if name is empty
+                    profile = p;
+                    # Redirect to onboarding if name is empty (new user)
                     if not p["name"] or p["name"] == "" {
-                        navigate("/profile");
+                        navigate("/onboarding");
                         return;
                     }
                     # Parse strategy to extract gaps
                     if p["last_strategy"] and p["last_strategy"] != "[]" {
                         try {
-                            let clean_strategy = p["last_strategy"].replace(
+                            clean_strategy = p["last_strategy"].replace(
                                 "```json", ""
                             ).replace(
                                 "```", ""
                             ).trim();
-                            let strategy = JSON.parse(clean_strategy);
+                            strategy = JSON.parse(clean_strategy);
                             if strategy.gaps && Array.isArray(strategy.gaps) {
-                                setGaps(strategy.gaps);
+                                gaps = strategy.gaps;
                             }
                         } except ex1 {
                             console.error("Error parsing strategy:", ex1);
@@ -43,14 +43,14 @@ cl def Dashboard()  -> any {
                     # Parse learning plan
                     if p["last_roadmap_plan"] and p["last_roadmap_plan"] != "[]" {
                         try {
-                            let clean_plan = p["last_roadmap_plan"].replace(
+                            clean_plan = p["last_roadmap_plan"].replace(
                                 "```json", ""
                             ).replace(
                                 "```", ""
                             ).trim();
-                            let plan = JSON.parse(clean_plan);
+                            plan = JSON.parse(clean_plan);
                             if plan.weeks {
-                                setRoadmap(plan.weeks);
+                                roadmap = plan.weeks;
                             }
                         } except ex2 {
                             console.error("Error parsing plan:", ex2);
@@ -58,39 +58,33 @@ cl def Dashboard()  -> any {
                     }
                 } else {
                     console.error("Profile load error:", p);
-                    setProfile(
-                        {
-                            "name": "",
-                            "interests": [],
-                            "goals": [],
-                            "skills": [],
-                            "target_role": ""
-                        }
-                    );
-                }
-            } else {
-                console.error("No reports in response");
-                setProfile(
-                    {
+                    profile = {
                         "name": "",
                         "interests": [],
                         "goals": [],
                         "skills": [],
                         "target_role": ""
-                    }
-                );
-            }
-        } except ex {
-            console.error("Error loading dashboard:", ex);
-            setProfile(
-                {
+                    };
+                }
+            } else {
+                console.error("No reports in response");
+                profile = {
                     "name": "",
                     "interests": [],
                     "goals": [],
                     "skills": [],
                     "target_role": ""
-                }
-            );
+                };
+            }
+        } except ex {
+            console.error("Error loading dashboard:", ex);
+            profile = {
+                "name": "",
+                "interests": [],
+                "goals": [],
+                "skills": [],
+                "target_role": ""
+            };
         }
     }
 
@@ -109,28 +103,17 @@ cl def Dashboard()  -> any {
         style={{"maxWidth": "1200px", "padding": "2rem 1rem"}}
     >
         <div
-            className="flex-between"
-            style={{"flexWrap": "wrap", "gap": "1rem", "marginBottom": "2rem"}}
+            style={{"marginBottom": "2rem"}}
         >
-            <div>
-                <h1
-                    style={{
-                        "margin": 0,
-                        "fontSize": "2rem",
-                        "color": "var(--foreground)"
-                    }}
-                >
-                    Career Command Center
-                </h1>
-                <p
-                    style={{
-                        "margin": "0.5rem 0 0 0",
-                        "color": "var(--muted-foreground)"
-                    }}
-                >
-                    Track your progress and seize new opportunities
-                </p>
-            </div>
+            <h1
+                style={{
+                    "margin": 0,
+                    "fontSize": "2rem",
+                    "color": "var(--foreground)"
+                }}
+            >
+                Welcome, {profile["name"]}
+            </h1>
         </div>
         <div className="grid-dashboard">
             <div className="card">
@@ -193,11 +176,10 @@ cl def Dashboard()  -> any {
                     <h3
                         style={{"fontSize": "1.1rem", "margin": "0"}}
                     >
-                        Recommended Path
+                        Learning Path
                     </h3>
                     <Link
                         to="/career"
-                        state={{"scrollTo": "learningPlan"}}
                         style={{
                             "fontSize": "0.875rem",
                             "color": "var(--brand)",
@@ -210,56 +192,61 @@ cl def Dashboard()  -> any {
                 </div>
                 {roadmap.length > 0
                 and <div className="flex-col gap-sm">
-                    {roadmap.map(
+                    {roadmap.slice(0, 5).map(
                         lambda  step: any  -> any{ return <div
                             style={{
                                 "display": "flex",
                                 "alignItems": "center",
-                                "gap": "0.5rem",
-                                "padding": "0.25rem 0"
+                                "gap": "0.75rem",
+                                "padding": "0.5rem 0",
+                                "borderBottom": "1px solid var(--border)"
                             }}
                         >
                             <div
                                 style={{
-                                    "width": "24px",
-                                    "height": "24px",
+                                    "width": "28px",
+                                    "height": "28px",
                                     "borderRadius": "50%",
                                     "background": "var(--brand)",
                                     "color": "white",
                                     "display": "flex",
                                     "alignItems": "center",
                                     "justifyContent": "center",
-                                    "fontSize": "0.7rem",
-                                    "fontWeight": "600",
+                                    "fontSize": "0.75rem",
+                                    "fontWeight": "700",
                                     "flexShrink": "0"
                                 }}
                             >
                                 {step["week"]}
                             </div>
                             <div
-                                style={{"fontSize": "0.85rem", "fontWeight": "500"}}
+                                style={{"fontSize": "0.9rem", "color": "var(--card-foreground)"}}
                             >
                                 {step["focus"]}
                             </div>
                         </div>; }
                     )}
+                    {roadmap.length > 5 and <div style={{"textAlign": "center", "paddingTop": "0.5rem"}}>
+                        <Link to="/career" style={{"fontSize": "0.875rem", "color": "var(--brand)"}}>
+                            +{roadmap.length - 5} more weeks →
+                        </Link>
+                    </div>}
                 </div>}
                 {roadmap.length == 0
                 and <div
                     style={{
                         "textAlign": "center",
                         "padding": "2rem 0",
-                        "color": "oklch(0.55 0.03 286)"
+                        "color": "var(--muted-foreground)"
                     }}
                 >
-                    <p>
-                        No active learning path.
+                    <p style={{"marginBottom": "1rem"}}>
+                        No learning path generated yet.
                     </p>
                     <Link
                         to="/career"
                         state={{"role": profile["target_role"], "run": True}}
-                        className="btn btn-secondary"
-                        style={{"display": "inline-block", "marginTop": "0.5rem"}}
+                        className="btn btn-primary"
                     >
                         Generate Roadmap
                     </Link>
@@ -267,7 +254,7 @@ cl def Dashboard()  -> any {
             </div>
             <div
                 className="flex-col"
-                style={{"gap": "2rem"}}
+                style={{"gap": "1.5rem"}}
             >
                 <div className="card">
                     <h3 className="section-title">
@@ -276,47 +263,26 @@ cl def Dashboard()  -> any {
                     {gaps.length > 0
                     and <div
                         className="flex-col"
-                        style={{"gap": "0.75rem"}}
+                        style={{"gap": "0.5rem"}}
                     >
                         {gaps.slice(0, 4).map(
-                            lambda  gap: any  -> any{ return <div className="alert-red">
+                            lambda  gap: any  -> any{ return <div className="alert-red" style={{"padding": "0.5rem 0.75rem"}}>
                                 <span>
                                     • {gap}
                                 </span>
                             </div>; }
                         )}
+                        {gaps.length > 4 and <div style={{"fontSize": "0.875rem", "color": "var(--muted-foreground)", "textAlign": "center"}}>
+                            +{gaps.length - 4} more gaps
+                        </div>}
                     </div>}
                     {gaps.length == 0
                     and <div
                         className="text-sub"
                         style={{"fontStyle": "italic"}}
                     >
-                        No gaps identified yet.
+                        No gaps identified yet. Generate a roadmap to identify skill gaps.
                     </div>}
-                </div>
-                <div className="card">
-                    <h3 className="section-title">
-                        Recommended Skills
-                    </h3>
-                    <div className="flex-col" style={{"gap": "0.5rem", "width": "100%"}}>
-                        {gaps.length > 0 and gaps.map(
-                            lambda  g: any  -> any{ return <div style={{
-                                "background": "#fefce8",
-                                "border": "1px solid #fef08a",
-                                "borderRadius": "6px",
-                                "padding": "0.75rem",
-                                "color": "#854d0e",
-                                "fontSize": "0.9rem",
-                                "lineHeight": "1.5"
-                            }}>
-                                {g}
-                            </div>; }
-                        )}
-                        {gaps.length == 0
-                        and <span className="text-sub">
-                            No recommendations yet.
-                        </span>}
-                    </div>
                 </div>
                 <div className="card">
                     <h3 className="section-title">
@@ -332,7 +298,7 @@ cl def Dashboard()  -> any {
                             </span>; }
                         )}{profile["skills"].length == 0
                         and <span className="text-sub">
-                            No skills added.
+                            No skills added yet. <Link to="/profile" style={{"color": "var(--brand)"}}>Add skills →</Link>
                         </span>}
                     </div>
                 </div>
